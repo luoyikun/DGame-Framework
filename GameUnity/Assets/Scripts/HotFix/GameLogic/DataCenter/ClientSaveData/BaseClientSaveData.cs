@@ -31,6 +31,17 @@ namespace GameLogic
         private bool m_needMigratePlayerPrefsToJson;
 
         /// <summary>
+        /// 当前存档已保存的数据版本。
+        /// </summary>
+        [JsonProperty]
+        public int SaveDataVersion { get; private set; }
+
+        /// <summary>
+        /// 当前代码支持的存档版本；子类字段结构变更时递增。
+        /// </summary>
+        protected virtual int CurrentSaveDataVersion => 1;
+
+        /// <summary>
         /// 初始化保存数据
         /// </summary>
         /// <param name="saveKey">保存数据的键名</param>
@@ -56,7 +67,14 @@ namespace GameLogic
                 if (!string.IsNullOrEmpty(jsonStr))
                 {
                     JsonConvert.PopulateObject(jsonStr, this);
-                    TryMigratePlayerPrefsToJson(jsonStr);
+                    if (TryUpgradeSaveDataVersion() || m_needMigratePlayerPrefsToJson)
+                    {
+                        Save();
+                    }
+                }
+                else
+                {
+                    SaveDataVersion = CurrentSaveDataVersion;
                 }
             }
             catch (Exception e)
@@ -134,6 +152,15 @@ namespace GameLogic
             => ClientSaveDataMgr.Instance.GetSaveData<T>();
 
         /// <summary>
+        /// 存档版本升级入口；子类按oldVersion分段补齐或迁移字段。
+        /// </summary>
+        /// <param name="oldVersion">旧存档版本，未带版本字段的历史存档为0</param>
+        /// <param name="newVersion">当前目标版本</param>
+        protected virtual void OnUpgradeData(int oldVersion, int newVersion)
+        {
+        }
+
+        /// <summary>
         /// 从当前存储后端读取JSON字符串。
         /// JsonFile模式下若文件不存在，会尝试读取旧PlayerPrefs数据用于懒迁移。
         /// </summary>
@@ -182,24 +209,20 @@ namespace GameLogic
             => Path.Combine(Application.persistentDataPath, JSON_FILE_DIRECTORY, $"{GetSafeFileName(m_saveKey)}.json");
 
         /// <summary>
-        /// 将旧PlayerPrefs数据迁移到JsonFile；迁移成功后不删除旧数据，便于回滚。
+        /// 检查并升级存档版本；升级后由调用方保存当前对象。
         /// </summary>
-        private void TryMigratePlayerPrefsToJson(string jsonStr)
+        private bool TryUpgradeSaveDataVersion()
         {
-            if (!m_needMigratePlayerPrefsToJson)
+            int currentVersion = CurrentSaveDataVersion;
+            if (SaveDataVersion >= currentVersion)
             {
-                return;
+                return false;
             }
 
-            string filePath = GetJsonFilePath();
-            try
-            {
-                WriteJsonFile(filePath, jsonStr);
-            }
-            catch (Exception e)
-            {
-                LogStorageError("MigratePlayerPrefsToJson", e, filePath);
-            }
+            int oldVersion = SaveDataVersion;
+            OnUpgradeData(oldVersion, currentVersion);
+            SaveDataVersion = currentVersion;
+            return true;
         }
 
         /// <summary>
