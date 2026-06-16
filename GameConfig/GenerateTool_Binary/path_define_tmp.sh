@@ -9,7 +9,7 @@ export CONF_ROOT="$(pwd)/.."
 
 # 客户端配置
 export CLIENT_BIN_DATA_OUTPATH="${WORKSPACE}/GameUnity/Assets/BundleAssets/Configs/Binary/"
-export CLIENT_JSON_DATA_OUTPATH="${WORKSPACE}/GameUnity/Json/"
+export CLIENT_JSON_DATA_OUTPATH="${WORKSPACE}/GameUnity/Configs/Json/"
 export CLIENT_CODE_OUTPATH="${WORKSPACE}/GameUnity/Assets/Scripts/HotFix/GameProto/LubanConfig/"
 
 # 服务器配置

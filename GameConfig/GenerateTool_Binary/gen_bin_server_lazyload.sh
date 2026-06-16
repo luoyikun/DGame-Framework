@@ -15,6 +15,7 @@ dotnet "${LUBAN_DLL}" \
     -d json \
     --conf "${CONF_ROOT}/luban.conf" \
     --customTemplateDir "${CONF_ROOT}/CustomTemplate/Server/CustomTemplate_Server_LazyLoad" \
+    -x tableImporter.name=default \
     -x code.lineEnding=crlf \
     -x outputCodeDir="${SERVER_CODE_OUTPATH}" \
     -x bin.outputDataDir="${SERVER_BINARY_DATA_OUTPATH}" \
